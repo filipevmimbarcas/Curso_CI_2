@@ -1,43 +1,48 @@
 name: Go
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ '*' ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ '*' ]
+    branches: [ '**' ]
 
 jobs:
-
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go_version: ['1.18', '1.17', '>=1.18']
+        go_version: ['1.18', '1.21', 'stable']
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go_version }}
-      
+
     - name: Build-DB
-      run: docker-compose build
-      
+      run: docker compose build
+
     - name: Create-DB
-      run: docker-compose up -d
+      run: docker compose up -d
+
+    - name: Wait for DB
+      run: sleep 15
 
     - name: Test
-      run: go test -v main_test.go 
-      
-  
+      run: go test -v main_test.go
+
   build:
     needs: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ['ubuntu-latest', 'ubuntu-18.04']
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 'stable'
+
     - name: Build
       run: go build -v main.go
